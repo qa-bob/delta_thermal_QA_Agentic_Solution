@@ -1,0 +1,113 @@
+name: QA Tests — Delta Thermal
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke tests
+        run: npm run test:smoke
+        env:
+          CI: '1'
+
+      - name: Run navigation tests
+        run: npm run test:navigation
+        env:
+          CI: '1'
+
+      - name: Run form tests
+        run: npm run test:forms
+        env:
+          CI: '1'
+
+      - name: Run functional tests
+        run: npx playwright test --grep @functional
+        env:
+          CI: '1'
+
+      - name: Run responsive tests
+        run: npm run test:responsive
+        env:
+          CI: '1'
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  visual:
+    name: Visual Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Only run visual tests if baselines exist in the repo
+    if: contains(github.event.head_commit.message, '[visual]') || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run visual regression tests
+        run: npm run test:visual
+        env:
+          CI: '1'
+
+      - name: Upload visual diff artifacts
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-diffs
+          path: test-results/
+          retention-days: 7

@@ -1,23 +1,17 @@
-﻿{
-    "name":  "Delta Thermal",
-    "url":  "http://www.deltathermalinc.com",
-    "description":  "",
-    "industry":  "",
-    "hasContactForm":  true,
-    "expectedNavItems":  [
-
-                         ],
-    "viewports":  [
-                      "desktop",
-                      "mobile",
-                      "tablet"
-                  ],
-    "skipVisual":  false,
-    "skipForms":  false,
-    "auth":  {
-                 "required":  false,
-                 "loginUrl":  "",
-                 "username":  "",
-                 "password":  ""
-             }
+{
+  "name": "Delta Thermal",
+  "url": "https://www.deltathermalinc.com",
+  "description": "Continuous infrared monitoring systems for electrical substations — detect hotspots, predict downtime, and eliminate outages with real-time thermal alerts.",
+  "industry": "Power Infrastructure Monitoring / Automation Machinery Manufacturing",
+  "hasContactForm": true,
+  "expectedNavItems": ["Who We Serve", "About", "Blog", "Gallery"],
+  "viewports": ["desktop", "mobile", "tablet"],
+  "skipVisual": false,
+  "skipForms": false,
+  "auth": {
+    "required": false,
+    "loginUrl": "",
+    "username": "",
+    "password": ""
+  }
 }

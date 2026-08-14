@@ -1,3 +1,13 @@
+---
+name: site-analyzer
+description: Use this agent to crawl a live website and analyze its structure, navigation, forms, and metadata. Invoke when onboarding a new company repo (site.config.json is empty), running /analyze-site, or verifying that expectedNavItems and hasContactForm are still accurate after a site redesign. Returns a fully-populated site.config.json and an issues checklist.
+tools:
+  - Read
+  - Write
+  - WebFetch
+  - Bash
+---
+
 # Agent: site-analyzer
 
 ## Role

@@ -1,3 +1,14 @@
+---
+name: test-generator
+description: Use this agent to generate site-specific Playwright TypeScript test files for pages or features not covered by the shared test suites. Invoke when a site has unique interactive elements (product calculators, video embeds, accordion FAQs, pricing tables), when writing regression tests for a recently discovered bug, or when a specific page needs dedicated coverage beyond what the generic specs provide. Output lands in tests/custom/ or the appropriate tests/ subdirectory.
+tools:
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+---
+
 # Agent: test-generator
 
 ## Role

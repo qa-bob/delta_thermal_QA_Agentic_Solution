@@ -10,10 +10,11 @@
  */
 
 import { test as base, expect } from '@playwright/test';
-import { loadSiteConfig, type SiteConfig } from '@types/site-config.types';
+import { loadSiteConfig, type SiteConfig } from '@app-types/site-config.types';
 import { HomePage } from '@pages/home.page';
 import { NavigationPage } from '@pages/navigation.page';
 import { ContactFormPage } from '@pages/contact.page';
+import { FunctionalPage } from '@pages/functional.page';
 
 // ── Fixture type definitions ─────────────────────────────────────────────────
 
@@ -26,6 +27,8 @@ export interface Fixtures {
   navigationPage: NavigationPage;
   /** ContactFormPage page object (does not auto-navigate) */
   contactPage: ContactFormPage;
+  /** FunctionalPage page object for content section and feature tests (does not auto-navigate) */
+  functionalPage: FunctionalPage;
 }
 
 // ── Extended test object ─────────────────────────────────────────────────────
@@ -66,6 +69,15 @@ export const test = base.extend<Fixtures>({
   contactPage: async ({ page, siteConfig }, use) => {
     const contactPage = new ContactFormPage(page, siteConfig);
     await use(contactPage);
+  },
+
+  /**
+   * functionalPage — constructs FunctionalPage without navigating.
+   * Used for content section, feature grid, footer, and social link tests.
+   */
+  functionalPage: async ({ page, siteConfig }, use) => {
+    const functionalPage = new FunctionalPage(page, siteConfig);
+    await use(functionalPage);
   },
 });
 

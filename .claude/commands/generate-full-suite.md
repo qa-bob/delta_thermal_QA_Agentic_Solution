@@ -1,165 +1,93 @@
-# Generate Full Playwright Test Suite
+﻿# /generate-full-suite
 
-You are a QA automation engineer. Your job is to analyze the website defined in `site.config.json` and build a **complete, production-quality Playwright + TypeScript regression test suite** using the Page Object Model (POM).
+Analyze the live website and generate a complete Playwright test suite — page objects and spec files — based on what is discovered on the site.
 
-This suite must cover GUI, functional, and regression scenarios. It must work against the live website without requiring login unless `auth.required` is true in the config.
+## Usage
 
----
-
-## Step 0: Read Configuration
-
-Read `site.config.json`. Extract:
-- `url` — the base URL to test
-- `name` — the company/product name
-- `hasContactForm` — whether to generate form tests
-- `skipForms` / `skipVisual` — whether to skip those test categories
-- `expectedNavItems` — expected navigation links (may be empty)
-
----
-
-## Step 1: Site Discovery
-
-Use `WebFetch` to analyze the site. Start with the homepage (`url`), then follow key links.
-
-For each page you visit, record:
-1. **Page title** and `<h1>` text
-2. **Navigation links** — all `<a>` tags in `<nav>`, `<header>`, and the footer
-3. **Forms** — all `<form>` elements, their `action`, method, and field names/types/placeholders
-4. **Key interactive elements** — buttons, dropdowns, accordions, tabs, modals, carousels
-5. **Unique content sections** — hero sections, feature grids, pricing tables, testimonials, CTAs
-6. **Images and media** — any `<img>` or `<video>` elements that are key to the page
-
-Visit at minimum: homepage, any "About", "Services", "Pricing", "Contact", "Features", "How It Works" pages you discover in the navigation.
-
----
-
-## Step 2: Plan the Page Object Classes
-
-Based on your discovery, plan one TypeScript class per distinct page/section. At minimum create:
-
-- `src/pages/home.page.ts` — always required
-- `src/pages/navigation.page.ts` — always required (update existing if present)
-- `src/pages/contact.page.ts` — if `hasContactForm` is true (update existing if present)
-- One class per additional discovered page (about, services, pricing, features, etc.)
-
-Each page class must:
-- `import { Page, Locator } from '@playwright/test'`
-- Extend `BasePage` from `./base.page`
-- Declare all key elements as `readonly Locator` properties
-- Expose methods that represent **user actions** (e.g., `clickPrimaryNav(item)`, `fillContactForm(data)`, `openMobileMenu()`)
-- Never put `expect()` assertions inside page objects — that belongs in tests
-
-Example structure:
-```typescript
-import { Page, Locator } from '@playwright/test';
-import { BasePage } from './base.page';
-
-export class ServicesPage extends BasePage {
-  readonly heroHeading: Locator;
-  readonly serviceCards: Locator;
-  readonly ctaButton: Locator;
-
-  constructor(page: Page) {
-    super(page);
-    this.heroHeading = page.locator('h1');
-    this.serviceCards = page.locator('[class*="service-card"], [class*="service-item"]');
-    this.ctaButton = page.locator('a[href*="contact"], button:has-text("Get Started")').first();
-  }
-
-  async clickCta(): Promise<void> {
-    await this.ctaButton.click();
-    await this.waitForLoad();
-  }
-}
+```
+/generate-full-suite [url]
 ```
 
----
+If `url` is omitted, use the URL from `site.config.json`.
 
-## Step 3: Write the Page Object Files
+## What this command does
 
-Write each page object class to `src/pages/<name>.page.ts`. Use real selectors you discovered in Step 1 — not generic placeholders. If you could not determine a selector with confidence, use a resilient fallback like `page.locator('role=...')` or `page.getByText(...)`.
+### Phase 1 — Site Analysis
 
-Update `src/fixtures/site.fixture.ts` to include any new page objects as fixture properties.
+1. Read `site.config.json` to get the current URL and company name.
+2. Navigate to the site homepage using `WebFetch`. Wait for `networkidle`.
+3. Dismiss any cookie/consent banners before inspecting structure.
+4. Extract and record:
+   - Page `<title>` and `<meta name="description">`
+   - All `nav a[href]` links (text + href)
+   - All `<h1>`, `<h2>` headings
+   - All primary CTA buttons
+   - All `<form>` elements (especially those with email fields)
+   - All `<img>` elements (check `alt` attributes)
+   - Key landmark sections: hero, about, products/services, features, testimonials, footer
+5. Follow nav links to check: `/contact`, `/about`, `/products`, `/services`, `/technology`.
+6. Update `site.config.json` with `expectedNavItems`, `hasContactForm`, `description`, `industry`.
 
----
+### Phase 2 — Page Object Generation
 
-## Step 4: Write the Test Files
+For each discovered page or section, create or update the corresponding page object in `src/pages/`:
 
-Write comprehensive tests across all categories. Each test file goes in the correct folder and uses the `@tag` system.
+- If the class already exists, add new locator properties and methods
+- If it does not exist, create a new file extending `BasePage`
+- Follow naming convention: `<page-name>.page.ts`
+- All locators are `readonly Locator` properties
+- Methods represent actions (not assertions)
+- No `expect()` calls inside page objects
 
-### `tests/smoke/site-availability.spec.ts` — @smoke
-- Site loads with HTTP 200
-- Page title is not empty
-- No console errors on load
-- Core content is visible (h1, nav, footer)
-- Page loads in under 5 seconds
+Minimum page objects to create/update:
+- `src/pages/home.page.ts` — hero, main heading, primary CTAs
+- `src/pages/navigation.page.ts` — nav links, mobile toggle
+- `src/pages/contact.page.ts` — form discovery, fields, submit button
+- `src/pages/functional.page.ts` — feature sections, about content, product grids
 
-### `tests/navigation/nav-links.spec.ts` — @navigation
-- All navigation links are present
-- Each nav link navigates to the correct page (check URL or heading)
-- Footer links are present and not broken
-- Mobile menu opens and closes correctly
-- Breadcrumbs (if present) are correct
-- Back navigation works
+### Phase 3 — Test File Generation
 
-### `tests/forms/contact-form.spec.ts` — @forms (if hasContactForm)
-- Form renders with expected fields
-- Required field validation triggers on empty submit
-- Email field validates format
-- Phone field (if present) validates format
-- Each field accepts valid input
-- Character limits on textarea (if present)
-- Form is accessible (labels associated with inputs)
-- Do NOT actually submit the form
+Generate spec files for every test category. Each spec file must:
 
-### `tests/functional/` — @functional
-Write tests for the actual business functionality you discovered. Examples:
-- Pricing page: all plans visible, CTA buttons present, feature lists populated
-- Features page: all feature sections load, images present, descriptions non-empty
-- Services page: service cards all render, links work
-- Search (if present): returns results, handles no-results state
-- Video (if present): player renders and is playable
-- Accordion/FAQ: items expand and collapse
-- Carousel/slider: advances to next slide
+1. Import `{ test, expect }` from `@fixtures/site.fixture`
+2. Tag every `test()` with at least one tag
+3. Use page objects via fixtures — no raw `page.locator()` calls in test bodies
+4. Not hardcode URLs — use `siteConfig.url` or Playwright's `baseURL`
+5. Never submit forms
+6. Use descriptive test names that explain what is being verified and why it matters
 
-Create one spec file per functional area (e.g., `tests/functional/pricing.spec.ts`, `tests/functional/features.spec.ts`).
+Files to generate (if not already complete):
 
-### `tests/visual/visual-regression.spec.ts` — @visual
-- Homepage desktop baseline
-- Homepage mobile baseline
-- Any key landing page baselines
+| File | Tags | Coverage |
+|------|------|---------|
+| `tests/smoke/site-availability.spec.ts` | `@smoke` | HTTP status, load time, JS errors, HTTPS, title |
+| `tests/navigation/nav-links.spec.ts` | `@navigation` | Nav visibility, link reachability, mobile menu, logo |
+| `tests/forms/contact-form.spec.ts` | `@forms` | Form presence, fields, submit button, HTML5 validation |
+| `tests/functional/homepage.spec.ts` | `@functional` | Hero, CTAs, headings, anchor links |
+| `tests/functional/content.spec.ts` | `@functional` | Feature sections, product/service content, about section |
+| `tests/visual/visual-regression.spec.ts` | `@visual` | Full-page screenshots at desktop/tablet/mobile |
+| `tests/responsive/layout.spec.ts` | `@responsive` | Horizontal scroll, font sizes, alt text, viewport meta |
 
-### `tests/responsive/layout.spec.ts` — @responsive
-- Navigation collapses to hamburger on mobile
-- Content is not clipped or overflowing on 390px viewport
-- Images scale correctly
-- Text remains readable (font-size check)
-- Horizontal scroll does not appear
+### Phase 4 — Validation
 
----
+1. Run `npx tsc --noEmit` to verify TypeScript compiles cleanly.
+2. Report any compilation errors with file and line numbers.
+3. Fix all type errors before finishing.
 
-## Step 5: Update site.config.json
+## Output format
 
-Fill in any fields you discovered:
-- `description` — one-sentence description of the product
-- `industry` — the industry/category
-- `expectedNavItems` — array of nav item labels you confirmed exist
-- `hasContactForm` — set accurately based on what you found
+Report your work in this order:
 
----
+1. **Site Analysis Summary** — what pages, forms, and nav items were found
+2. **Config Changes** — what was updated in `site.config.json`
+3. **Files Created/Updated** — list of page objects and spec files
+4. **TypeScript Status** — pass or list of errors with fixes applied
+5. **Next Steps** — any manual steps needed (e.g., run `npm run baseline` for visual tests)
 
-## Step 6: Verify
+## Constraints
 
-Run a quick syntax check:
-```bash
-npx tsc --noEmit
-```
-
-Fix any TypeScript errors before finishing.
-
-Report a summary of what you built:
-- Pages analyzed
-- Page object classes created
-- Test files created
-- Total test count
-- Any pages or features you could not access (blocked, login-required, etc.)
+- Do not submit any forms
+- Do not create accounts or enter real credentials
+- Do not hardcode URLs — always derive from `siteConfig.url`
+- Do not use `page.waitForTimeout()` — use Playwright auto-waiting
+- Do not add `expect()` calls inside page object methods
