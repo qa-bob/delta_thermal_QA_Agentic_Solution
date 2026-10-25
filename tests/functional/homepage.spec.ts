@@ -55,10 +55,7 @@ test.describe('Homepage Functional Tests @functional', () => {
   test('all homepage CTA buttons are visible @functional', async ({ homePage }) => {
     const ctas = await homePage.getCTAButtons();
 
-    if (ctas.length === 0) {
-      console.warn('[functional] No CTA elements found on homepage — skipping visibility check');
-      return;
-    }
+    test.skip(ctas.length === 0, 'No CTA elements found on homepage');
 
     // Check the first 5 CTAs (avoid iterating hundreds of links on link-heavy pages)
     for (const cta of ctas.slice(0, 5)) {
@@ -122,10 +119,7 @@ test.describe('Homepage Functional Tests @functional', () => {
     );
 
     const count = await heroImages.count();
-    if (count === 0) {
-      console.warn('[functional] No hero <img> found — site may use CSS background images');
-      return;
-    }
+    test.skip(count === 0, 'No hero <img> found — site may use CSS background images');
 
     // At least one hero image should be visible
     const firstVisible = await heroImages.first().isVisible();
@@ -164,10 +158,7 @@ test.describe('Homepage Functional Tests @functional', () => {
     const anchorLinks = page.locator('a[href^="#"]');
     const count = await anchorLinks.count();
 
-    if (count === 0) {
-      console.warn('[functional] No anchor links (#section) found on homepage — skipping');
-      return;
-    }
+    test.skip(count === 0, 'No anchor links (#section) found on homepage');
 
     const brokenAnchors: string[] = [];
 

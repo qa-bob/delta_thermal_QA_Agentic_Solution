@@ -113,7 +113,7 @@ export class FunctionalPage extends BasePage {
         ? ((await heading.textContent()) ?? '').trim()
         : '';
 
-      const bodyText = await section.evaluate<string>((el) => (el as HTMLElement).innerText ?? '');
+      const bodyText = await section.evaluate((el) => (el as HTMLElement).innerText ?? '');
       results.push({
         heading: headingText,
         hasContent: bodyText.trim().length > 30,
@@ -233,7 +233,7 @@ export class FunctionalPage extends BasePage {
     }
 
     // Fallback: look for © symbol in footer text
-    const footerText = await footer.evaluate<string>((el) => (el as HTMLElement).innerText ?? '');
+    const footerText = await footer.evaluate((el) => (el as HTMLElement).innerText ?? '');
     const copyrightMatch = footerText.match(/©.+/);
     return copyrightMatch ? copyrightMatch[0].trim() : '';
   }
