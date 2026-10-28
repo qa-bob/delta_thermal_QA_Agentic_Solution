@@ -189,10 +189,7 @@ test.describe('Site Content @functional', () => {
       // Filter to internal links only (external social/partner links may have CORS restrictions)
       const internalLinks = footerLinks.filter((l) => !l.isExternal);
 
-      if (internalLinks.length === 0) {
-        console.warn('[functional] No internal footer links found to check');
-        return;
-      }
+      test.skip(internalLinks.length === 0, 'No internal footer links found to check');
 
       const brokenLinks: Array<{ href: string; status: number }> = [];
       const siteOrigin = new URL(siteConfig.url).origin;
@@ -233,10 +230,7 @@ test.describe('Site Content @functional', () => {
 
       const socialLinks = await functionalPage.getSocialLinks();
 
-      if (socialLinks.length === 0) {
-        console.warn('[functional] No social media links found on the homepage');
-        return;
-      }
+      test.skip(socialLinks.length === 0, 'No social media links found on the homepage');
 
       const missingTarget: string[] = [];
 
@@ -267,10 +261,7 @@ test.describe('Site Content @functional', () => {
 
       const contactLink = page.locator('a').filter({ hasText: /contact/i }).first();
 
-      if (await contactLink.count() === 0) {
-        console.warn('[functional] No "Contact" link found on homepage');
-        return;
-      }
+      test.skip(await contactLink.count() === 0, 'No "Contact" link found on homepage');
 
       await contactLink.click();
       await page.waitForLoadState('domcontentloaded');
@@ -324,7 +315,7 @@ test.describe('Site Content @functional', () => {
 
   test.describe('Images and Media', () => {
     test('all visible images have loaded (no broken images) @functional', async ({ page, siteConfig }) => {
-      await page.goto(siteConfig.url, { waitUntil: 'networkidle' });
+      await page.goto(siteConfig.url, { waitUntil: 'load' });
 
       const brokenImages = await page.evaluate<string[]>(() => {
         return Array.from(document.querySelectorAll('img'))
